@@ -189,6 +189,10 @@ def readCSTTimeTrace(fileName,comment=''):
     outputTrace1[:,0]*=tFactor
     if(len(outputTrace2)>0):
         outputTrace2[:,0]*=tFactor
+    if np.mod(len(inputTrace),2)==1:
+        outputTrace1=outputTrace1[:-1,:]
+        outputTrace2=outputTrace2[:-1,:]
+        inputTrace=inputTrace[:-1,:]
     meta=MetaData(device='CST',dtype=['TIME',dtype],datarange=[inputTrace[:,0].min(),inputTrace[:,0].max(),len(inputTrace[:,0])],comment=comment)
     return [inputTrace,outputTrace1,outputTrace2],meta
     
