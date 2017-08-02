@@ -7,7 +7,7 @@ import numpy.fft as fft
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 import re as re
-
+import scipy.interpolate as interp
 
 #************************************************************
 #compute delay spectrum in the same way that Nicolas does
@@ -273,6 +273,21 @@ class GainData():
                     
             
         selection=np.logical_and(self.fAxis>=fMin,self.fAxis<=fMax)
+        nf=len(np.where(selection)[0])
+        if np.mod(nf,2)==1:
+            nf+=1
+            maxind=np.where(selection)[0].max()
+            if maxind<len(selection)-1:
+                selection[maxind+1]=True
+            else:
+                minind=np.where(selection)[0].min()
+                if minind>0:
+                    selection[minind-1]=True
+                else:
+                    nf-=2
+                    selection[maxind]=False
+        
+                    
         self.fAxis=self.fAxis[selection]
         self.gainFrequency=self.gainFrequency[selection]
         if(windowFunction== 'blackman-harris'):
@@ -286,4 +301,75 @@ class GainData():
             gainDelay[self.tAxis<0.]=0.
             self.gainFrequency=fft.fftshift(fft.fft(fft.fftshift(gainDelay)))
         self.gainDelay=fft.fftshift(fft.ifft(fft.fftshift(self.gainFrequency*wF)))
-    
+
+
+    def interpolate_subband(self,nfi,df,f0,full_output=False):
+        '''
+        interpolates a sub-band between fMin and fMax by 
+        taking a windowed FFT at a bandwidth twice the
+        requested bandwidth, extrapolating and interpolating 
+        the delay-transform transform, and FT-ing back. 
+        '''
+        change_nfi=False
+        fMin=f0-nfi/2*df
+        if fMin < self.fAxis.min():
+            fMin=self.fAxis.min()
+            change_nfi=True
+        fMax=f0+(nfi/2-1)*df
+        if fMax > self.fAxis.max():
+            fMax=self.fAxis.max()
+            change_nfi=True
+        if change_nfi:
+            nfi=int(np.round(fMax/df-fMin/df))
+            f0=fMin+nfi/2*df
+        fAxis_interp=f0+np.arange(-nfi/2,nfi/2)*df
+        tAxis_interp=fft.fftshift(fft.fftfreq(nfi,df))
+        b=fMax-fMin
+        select_max=np.min([self.fAxis.max(),f0+b])
+        select_min=np.max([self.fAxis.min(),f0-b])
+        selection=np.logical_and(self.fAxis>=select_min,self.fAxis<=select_max)
+        nf=len(self.fAxis[selection])
+        if np.mod(nf,2)==1:
+            nf+=1
+            maxind=np.where(selection)[0].max()
+            if maxind < len(selection)-1:
+                selection[maxind+1]=True
+            else:
+                minind=np.where(selection)[0].min()
+                if minind > 0:
+                    selection[minind-1]=True
+                else:
+                    nf-=2
+                    selection[maxind]=False
+                
+                
+        sub_band=self.gainFrequency[selection]
+        sub_fAxis=self.fAxis[selection]
+        window=signal.blackmanharris(nf)
+        delay_band=fft.fftshift(fft.ifft(fft.fftshift(sub_band*window)))
+        sub_tAxis=fft.fftshift(fft.fftfreq(len(sub_band),self.fAxis[1]-self.fAxis[0]))
+        maxTime=sub_tAxis.max()
+        minTimeExt=maxTime*1./3.
+        maxTimeExt=maxTime*2./3.
+        ext_select=np.logical_and(sub_tAxis<=maxTimeExt,sub_tAxis>=minTimeExt)
+        ext_poly=np.polyfit(sub_tAxis[ext_select],np.log10(np.abs(delay_band[ext_select])),1)
+        interp_func_abs=interp.interp1d(sub_tAxis,np.log10(np.abs(delay_band)))
+        interp_func_arg=interp.interp1d(sub_tAxis,np.angle(delay_band))
+        band_interp=np.zeros(nfi,dtype=complex)
+        select_interp=np.logical_and(tAxis_interp>=0,tAxis_interp<maxTimeExt)
+        band_interp[select_interp]=10**(interp_func_abs(tAxis_interp[select_interp]))*np.exp(1j*interp_func_arg(tAxis_interp[select_interp]))
+        select_ext=tAxis_interp>=maxTimeExt
+        band_interp[select_ext]=10**(tAxis_interp[select_ext]*ext_poly[0]+ext_poly[1])
+        #band_interp[select_ext]=0.
+        window_interp_func=interp.interp1d(sub_fAxis,signal.blackmanharris(len(sub_band)))
+        wFactor=1./((fAxis_interp.max()-fAxis_interp.min())/(sub_fAxis.max()-sub_fAxis.min()))
+        print wFactor
+        band_interp_f=fft.fftshift(fft.fft(fft.fftshift(band_interp)))*wFactor
+        window_corr=window_interp_func(fAxis_interp)
+        #band_interp_f/=window_corr
+        if full_output:
+            return sub_tAxis,delay_band,sub_fAxis,sub_band,tAxis_interp,band_interp,fAxis_interp,band_interp_f
+        else:
+            return fAxis_interp,band_interp_f
+        
+        
