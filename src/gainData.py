@@ -303,6 +303,32 @@ class GainData():
         self.gainDelay=fft.fftshift(fft.ifft(fft.fftshift(self.gainFrequency*wF)))
 
 
+
+    def export_CST_freq_s11(self,outfile):
+        '''
+        export frequency S11 to a .txt file format output by CST
+        '''
+        spacer=''.join([' ' for m in range(21)])
+        amp_str=('        Frequency / MHz                S1,1/abs,dB\n'
+                 '----------------------------------------------------'
+                 '------------------\n')
+        pha_str=('        Frequency / MHz                S1,1/arg,degrees\n'
+                 '---------------------------------------------------------'
+                 '-------------\n')
+        for freq,amp,pha in zip(self.fAxis,
+                                np.abs(self.gainFrequency),
+                                np.angle(self.gainFrequency)):
+            amp_str+='%.8f'%(20.*np.log10(amp))+spacer+'%.8f\n'%(freq)
+            pha_str+='%.8f'%(np.degrees(pha))+spacer+'%.8f\n'%(freq)
+        f=open(outfile+'_amp.txt')
+        f.write(amp_str)
+        f.close()
+        f=open(output+'_pha.txt')
+        f.write(pha_str)
+        f.close()
+        
+        
+        
     def interpolate_subband(self,nfi,df,f0,full_output=False):
         '''
         interpolates a sub-band between fMin and fMax by 
