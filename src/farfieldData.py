@@ -122,15 +122,20 @@ class Beam:
         hdulist+=hduprimary
         fits.HDUList(hdulist).writeto(fitsfile,clobber=True)
         fits.append(fitsfile,freq_tbhdu.data,freq_tbhdu.header,verify=False)
+        data_interp=np.zeros((np.nside2npix(nside_out),len(freq_inds)))
+        
         for polind,pol in zip(pol_inds,pol_list):
-            hdu = fits.ImageHDU(data[polind], name='BEAM_{0}'.format(pol))
-            hdu.header['PIXTYPE'] = ('HEALPIX', 'Type of pixelization')
-            hdu.header['ORDERING'] = (scheme, 'Pixel ordering scheme, either RING or NESTED')
-            hdu.header['NSIDE'] = (nside_out, 'NSIDE parameter of HEALPIX')
-            hdu.header['NPIX'] = (hp.nside2npix(nside_out), 'Number of HEALPIX pixels')
-            hdu.header['FIRSTPIX'] = (0, 'First pixel # (0 based)')
-            hdu.header['LASTPIX'] = (len(data)-1, 'Last pixel # (0 based)')
-            fits.append(fitsfile,hdu.data,hdu.header,verify=False)
+            for fi,freqind in enumerate(freq_inds):
+                data=self.data[polind,freqind,:].flatten()
+                data_interp[:,fi]=hp.get_interp_val(data,theta_out,phi_out)
+            imghdu = fits.ImageHDU(data_interp, name='BEAM_{0}'.format(pol))
+            imghdu.header['PIXTYPE'] = ('HEALPIX', 'Type of pixelization')
+            imghdu.header['ORDERING'] = (scheme, 'Pixel ordering scheme, either RING or NESTED')
+            imghdu.header['NSIDE'] = (nside_out, 'NSIDE parameter of HEALPIX')
+            imghdu.header['NPIX'] = (hp.nside2npix(nside_out), 'Number of HEALPIX pixels')
+            imghdu.header['FIRSTPIX'] = (0, 'First pixel # (0 based)')
+            imghdu.header['LASTPIX'] = (len(data_interp)-1, 'Last pixel # (0 based)')
+            fits.append(fitsfile,imghdu.data,hdu.header,verify=False)
             #hdulist += [hdu]
             #hdulist += [freq_tbhdu.data,freq_tbhdu.header]
             #hdulist += [fits.ImageHDU([100e6], name='FREQS_{0}'.format(pol))]
