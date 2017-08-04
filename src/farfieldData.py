@@ -1,6 +1,6 @@
 import numpy as n
-import matplotlib.pyplot as p
 import healpy as hp
+from astropy.io import fits
 pi=n.pi
 import copy
 import scipy.optimize as op
@@ -82,7 +82,7 @@ class Beam:
             self.fAxis[m]=float(tempf[0])*1e6
             for p in range(self.npolsOriginal):
                 self._interp_beam(filelist[p*self.nf+m],p,m)
-    def exportFits(self,fitsfile,pol_list,freq_list,scheme='RING',out_nside=None):
+    def exportFits(self,fitsfile,pol_list,freq_list,scheme='RING',nside_out=None):
         '''
         export fits-file at channel chan and polarization pol
         Args:
@@ -90,39 +90,38 @@ class Beam:
         pol_list, list of labels of polarizations to write
         chan_list, list of frequencies to write
         '''
-        if out_nside is None:
-            out_nside=self.nside
-        pol_list=np.array(pol_list)
-        freq_list=np.array(freq_list)
+        if nside_out is None:
+            nside_out=self.nside
+        pol_list=n.array(pol_list)
+        freq_list=n.array(freq_list)
         pol_inds=[]
         freq_inds=[]
         for pol,freq in zip(pol_list,freq_list):
             assert pol in self.pols
-            pol_inds.append(n.where(self.pols==pol)[0][0])
+            pol_inds.append(n.where(n.array(self.pols)==pol)[0][0])
             assert freq in self.fAxis
-            freq_inds.append(n.where(self.freqs==freq)[0][0])
+            freq_inds.append(n.where(n.array(self.fAxis)==freq)[0][0])
         data=self.data[:,freq_inds,:].reshape(-1,1)
-        theta,phi=hp.pix2ang(self.nside,n.arange(hp.nside2npix(out_nside)))
+        theta_out,phi_out=hp.pix2ang(self.nside,n.arange(hp.nside2npix(nside_out)))
         freq_col=[fits.Column(name='Frequency [MHz]',format='D',array=freq_list)]
-        freq_columns=fits.ColDefs(freqcol,ascii=False)
-        freq_tbhdu = fit.new_table(freq_columns)
+        freq_columns=fits.ColDefs(freq_col,ascii=False)
+        freq_tbhdu = fits.BinTableHDU.from_columns(freq_columns)
         freq_tbhdu.header.set('EXTNAME','FREQUENCY')
         
 
-        hdulist = []
-        hduprimary=fits.primaryHDU()
+        hduprimary=fits.PrimaryHDU()
         hduprimary.header.set('EXTNAME','PRIMARY')
         hduprimary.header.set('NEXTEN',3)
         hduprimary.header.set('FITSTYPE','IMAGE')
-        hduprimary.header['NSIDE']=(out_nside,'NSIDE')
-        hduprimary.header['PIXAREA']=(hp.nside2pixarea(out_nside),'pixel solid angle (steradians)')
+        hduprimary.header['NSIDE']=(nside_out,'NSIDE')
+        hduprimary.header['PIXAREA']=(hp.nside2pixarea(nside_out),'pixel solid angle (steradians)')
         hduprimary.header['NEXTEN']=(3,'Number of extensions')
         hduprimary.header['NPOL'] = (len(pol_inds), 'Number of polarizations')
         hduprimary.header['SOURCE'] = ('HERA-CST', 'Source of data')
-        hdulist+=hduprimary
-        fits.HDUList(hdulist).writeto(fitsfile,clobber=True)
+        hdulist=[hduprimary]
+        fits.HDUList(hdulist).writeto(fitsfile,overwrite=True)
         fits.append(fitsfile,freq_tbhdu.data,freq_tbhdu.header,verify=False)
-        data_interp=np.zeros((np.nside2npix(nside_out),len(freq_inds)))
+        data_interp=n.zeros((hp.nside2npix(nside_out),len(freq_inds)))
         
         for polind,pol in zip(pol_inds,pol_list):
             for fi,freqind in enumerate(freq_inds):
@@ -135,13 +134,13 @@ class Beam:
             imghdu.header['NPIX'] = (hp.nside2npix(nside_out), 'Number of HEALPIX pixels')
             imghdu.header['FIRSTPIX'] = (0, 'First pixel # (0 based)')
             imghdu.header['LASTPIX'] = (len(data_interp)-1, 'Last pixel # (0 based)')
-            fits.append(fitsfile,imghdu.data,hdu.header,verify=False)
+            fits.append(fitsfile,imghdu.data,imghdu.header,verify=False)
             #hdulist += [hdu]
             #hdulist += [freq_tbhdu.data,freq_tbhdu.header]
             #hdulist += [fits.ImageHDU([100e6], name='FREQS_{0}'.format(pol))]
                                 
 #outhdu = fits.HDUList(hdulist)
-#outhdu.writeto(outfile, clobber=True)
+#outhdu.writeto(outfile, overwrite =True)
 
                 
 class FarFieldData:
