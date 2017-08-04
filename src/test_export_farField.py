@@ -11,4 +11,4 @@ farfield=FarFieldData([beamFileFeedOnly],[beamFile],
                       invertFeedOnly=False,
                       rotatexz=True,
                       dFocus=rigging_height)
-farfield.beamFeedAndDish.exportFits('test.fits',['X'],[100e6])
+farfield.beamFeedAndDish.export_fits_prisim('../data/simulations/test.fits',['X'],[100e6])

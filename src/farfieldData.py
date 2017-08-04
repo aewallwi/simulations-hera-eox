@@ -82,7 +82,7 @@ class Beam:
             self.fAxis[m]=float(tempf[0])*1e6
             for p in range(self.npolsOriginal):
                 self._interp_beam(filelist[p*self.nf+m],p,m)
-    def exportFits(self,fitsfile,pol_list,freq_list,scheme='RING',nside_out=None):
+    def export_fits_prisim(self,fitsfile,pol_list,freq_list,scheme='RING',nside_out=None):
         '''
         export fits-file at channel chan and polarization pol
         Args:
@@ -103,12 +103,11 @@ class Beam:
             freq_inds.append(n.where(n.array(self.fAxis)==freq)[0][0])
         data=self.data[:,freq_inds,:].reshape(-1,1)
         theta_out,phi_out=hp.pix2ang(self.nside,n.arange(hp.nside2npix(nside_out)))
-        freq_col=[fits.Column(name='Frequency [MHz]',format='D',array=freq_list)]
-        freq_columns=fits.ColDefs(freq_col,ascii=False)
-        freq_tbhdu = fits.BinTableHDU.from_columns(freq_columns)
-        freq_tbhdu.header.set('EXTNAME','FREQUENCY')
+        #freq_col=[fits.Column(name='Frequency [MHz]',format='D',array=n.array(freq_list))]
+        #freq_columns=fits.ColDefs(freq_col,ascii=False)
+        #freq_tbhdu = fits.BinTableHDU.from_columns(freq_col)
+        #freq_tbhdu = fits.BinTableHDU.from_columns(n.array(freq_list))
         
-
         hduprimary=fits.PrimaryHDU()
         hduprimary.header.set('EXTNAME','PRIMARY')
         hduprimary.header.set('NEXTEN',3)
@@ -120,7 +119,10 @@ class Beam:
         hduprimary.header['SOURCE'] = ('HERA-CST', 'Source of data')
         hdulist=[hduprimary]
         fits.HDUList(hdulist).writeto(fitsfile,clobber=True)
-        fits.append(fitsfile,freq_tbhdu.data,freq_tbhdu.header,verify=False)
+        for pol in pol_list:
+            #freq_tbhdu.header.set('EXTNAME','FREQS_{0}'.format(pol))
+            freq_tbhdu=fits.ImageHDU(freq_list,name='FREQS_{0}'.format(pol))
+            fits.append(fitsfile,freq_tbhdu.data,freq_tbhdu.header,verify=False)
         data_interp=n.zeros((hp.nside2npix(nside_out),len(freq_inds)))
         
         for polind,pol in zip(pol_inds,pol_list):
