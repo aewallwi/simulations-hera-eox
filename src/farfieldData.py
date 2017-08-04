@@ -119,7 +119,7 @@ class Beam:
         hduprimary.header['NPOL'] = (len(pol_inds), 'Number of polarizations')
         hduprimary.header['SOURCE'] = ('HERA-CST', 'Source of data')
         hdulist=[hduprimary]
-        fits.HDUList(hdulist).writeto(fitsfile,overwrite=True)
+        fits.HDUList(hdulist).writeto(fitsfile,clobber=True)
         fits.append(fitsfile,freq_tbhdu.data,freq_tbhdu.header,verify=False)
         data_interp=n.zeros((hp.nside2npix(nside_out),len(freq_inds)))
         
@@ -140,7 +140,7 @@ class Beam:
             #hdulist += [fits.ImageHDU([100e6], name='FREQS_{0}'.format(pol))]
                                 
 #outhdu = fits.HDUList(hdulist)
-#outhdu.writeto(outfile, overwrite =True)
+#outhdu.writeto(outfile, clobber =True)
 
                 
 class FarFieldData:

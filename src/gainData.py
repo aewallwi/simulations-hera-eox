@@ -318,12 +318,12 @@ class GainData():
         for freq,amp,pha in zip(self.fAxis,
                                 np.abs(self.gainFrequency),
                                 np.angle(self.gainFrequency)):
-            amp_str+='%.8f'%(20.*np.log10(amp))+spacer+'%.8f\n'%(freq)
-            pha_str+='%.8f'%(np.degrees(pha))+spacer+'%.8f\n'%(freq)
-        f=open(outfile+'_amp.txt')
+            amp_str+='%.8f'%(1e3*freq)+spacer+'%.8f\n'%(20.*np.log10(amp))
+            pha_str+='%.8f'%(1e3*freq)+spacer+'%.8f\n'%(np.degrees(pha))
+        f=open(outfile+'_amp.txt','w')
         f.write(amp_str)
         f.close()
-        f=open(output+'_pha.txt')
+        f=open(outfile+'_pha.txt','w')
         f.write(pha_str)
         f.close()
         
