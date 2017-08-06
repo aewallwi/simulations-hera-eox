@@ -36,7 +36,7 @@ def rotateBeam(inputMap,rot=[90,0,0]):
 
 
 class Beam:
-    def __init__(self,nside=64,pols=['XX','Y'],rotateY=False,invert=False,rotatexz=False):
+    def __init__(self,nside=64,pols=['X','Y'],rotateY=False,invert=False,rotatexz=False):
         self.nside=nside
         self.npolsOriginal=len(pols)
         self.npols=max(len(pols),2)

@@ -1,0 +1,3 @@
+/Users/aaronew/Dropbox_MIT/Science/simulations-hera-eox/data/beams/varyRiggingHeight_tall/run000002
+/Users/aaronew/Dropbox_MIT/Science/simulations-hera-eox/data/beams/varyRiggingHeight_tall/run000003
+
