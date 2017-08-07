@@ -1,11 +1,11 @@
 #!/bin/bash
 source ~/Python/analysis/bin/activate
-#models=( tall short )
-#heights=( 4 9 )
-#zs=( 13 14 15 16 )
-models=( tall )
-heights=( 4 )
-zs=( 13 )
+models=( tall short )
+heights=( 4 9 )
+zs=( 13 14 15 16 )
+#models=( tall )
+#heights=( 4 )
+#zs=( 13 )
 export TMPDIR=/tmp/
 for model in "${models[@]}"; do
     for h in "${heights[@]}"; do

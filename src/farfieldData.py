@@ -96,9 +96,10 @@ class Beam:
         freq_list=n.array(freq_list)
         pol_inds=[]
         freq_inds=[]
-        for pol,freq in zip(pol_list,freq_list):
+        for pol in pol_list:
             assert pol in self.pols
             pol_inds.append(n.where(n.array(self.pols)==pol)[0][0])
+        for freq in freq_list:
             assert freq in self.fAxis
             freq_inds.append(n.where(n.array(self.fAxis)==freq)[0][0])
         data=self.data[:,freq_inds,:].reshape(-1,1)
@@ -110,11 +111,11 @@ class Beam:
         
         hduprimary=fits.PrimaryHDU()
         hduprimary.header.set('EXTNAME','PRIMARY')
-        hduprimary.header.set('NEXTEN',3)
+        hduprimary.header.set('NEXTEN',2)
         hduprimary.header.set('FITSTYPE','IMAGE')
         hduprimary.header['NSIDE']=(nside_out,'NSIDE')
         hduprimary.header['PIXAREA']=(hp.nside2pixarea(nside_out),'pixel solid angle (steradians)')
-        hduprimary.header['NEXTEN']=(3,'Number of extensions')
+        hduprimary.header['NEXTEN']=(2,'Number of extensions')
         hduprimary.header['NPOL'] = (len(pol_inds), 'Number of polarizations')
         hduprimary.header['SOURCE'] = ('HERA-CST', 'Source of data')
         hdulist=[hduprimary]
