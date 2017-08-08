@@ -39,18 +39,19 @@ class Beam:
     def __init__(self,nside=64,pols=['X','Y'],rotateY=False,invert=False,rotatexz=False):
         self.nside=nside
         self.npolsOriginal=len(pols)
-        self.npols=max(len(pols),2)
         self.nPix=hp.nside2npix(nside)
         self.nSide=nside
         self.invert=invert
         self.pixArea=hp.nside2pixarea(self.nSide)
         self.pols=pols
         self.rotatexz=rotatexz
+        self.rotateY=rotateY
         if(rotateY):
             pols.append('Y')
         if 'X' in pols and 'Y' in pols:
             pols.append('I')
             pols.append('Q')
+        self.npols=len(self.pols)
             
     def _interp_beam(self,beam_file,pol,chan):
         data=n.loadtxt(beam_file,skiprows=2);
@@ -69,6 +70,7 @@ class Beam:
         self.fAxis=n.zeros(self.nf)
         self.data=n.zeros((self.npols,self.nf,self.nPix))   
         self.solidAngles=n.zeros((self.npols,self.nf))
+        self.solidAnglesSq=n.zeros((self.npols,self.nf))
         self.effArea=n.zeros_like(self.solidAngles)
         self.ellipticity=n.zeros(self.nf)
         
@@ -76,21 +78,23 @@ class Beam:
         for chan in range(self.nf):
             tempf=flist[chan].split('p')
             self.fAxis[chan]=float(tempf[0])*1e6
+            xind=n.where(n.array(self.pols)=='X')[0][0]
+            yind=n.where(n.array(self.pols)=='Y')[0][0]
+            iind=n.where(n.array(self.pols)=='I')[0][0]
+            qind=n.where(n.array(self.pols)=='Q')[0][0]
             for p in range(self.npolsOriginal):
                 self._interp_beam(filelist[p*self.nf+chan],p,chan)
-            if self.rotateY and len(self.npolsOriginal)==1:
-                self.data[n.where(n.array(self.pols)=='Y')[0][0],:]=rotateBeam(self.data[n.where(n.array(self.pols)=='X')[0][0],:],rot=[0,0,90])
+            if self.rotateY and self.npolsOriginal==1:
+                self.data[yind,chan,:]=rotateBeam(self.data[xind,chan,:].flatten(),rot=[0,0,90])
             if 'I' in self.pols:
-                self.data[n.where(n.array(self.pols)=='I')[0][0],:]=0.5*(self.data[n.where(n.array(self.pols)=='X')[0][0],:]+\
-                                                                         self.data[n.where(n.array(self.pols)=='Y')[0][0],:])
+                self.data[iind,chan,:]=0.5*(self.data[xind,chan,:]+self.data[yind,chan,:])
             if 'Q' in self.pols:
-                self.data[n.where(n.array(self.pols)=='Q')[0][0],:]=0.5*(self.data[n.where(n.array(self.pols)=='X')[0][0],:]-\
-                                                                         self.data[n.where(n.array(self.pols)=='Y')[0][0],:])
-            for pol in self.npols:
+                self.data[qind,chan,:]=0.5*(self.data[xind,chan,:]-self.data[yind,chan,:])
+            for pol in range(self.npols):
                 self.solidAngles[pol,chan]=self.pixArea*n.sum(self.data[pol,chan])
                 self.solidAnglesSq[pol,chan]=self.pixArea*n.sum(self.data[pol,chan]**2.)
                 self.effArea[pol,chan]=(c/(self.fAxis[chan]))**2./(self.solidAngles[pol,chan])
-            self.ellipticity[chan]=self.solidAnglesSq[n.where(n.array(self.pols)=='Q')[0][0],chan]/self.solidAnglesSq[n.where(n.array(self.pols)=='I')[0][0],chan]
+            self.ellipticity[chan]=self.solidAnglesSq[qind,chan]/self.solidAnglesSq[iind,chan]
             
 
                 
@@ -98,13 +102,13 @@ class Beam:
         '''
         write out beam integrals to a text file in format freq  \int (Ax+Ay)/2 dOmega \int (Ax+Ay)^2/4 dOmega \int (Ax - Ay)^2/4 dOmega 
         '''
-        output_array=np.zeros((self.nchan,4)):
+        output_array=n.zeros((self.nf,4))
         for chan,freq in enumerate(self.fAxis):
             output_array[chan,0]=freq/1e6
-            output_array[chan,1]=n.solidAngles[n.where(n.array(self.pols)=='I')[0][0],chan]
-            output_array[chan,2]=n.solidAnglesSq[n.where(n.array(self.pols)=='I')[0][0],chan]
+            output_array[chan,1]=self.solidAngles[n.where(n.array(self.pols)=='I')[0][0],chan]
+            output_array[chan,2]=self.solidAnglesSq[n.where(n.array(self.pols)=='I')[0][0],chan]
             output_array[chan,3]=self.ellipticity[chan]
-        np.save(outfile+'.npy',output_array)
+        n.save(outfile+'.npy',output_array)
       
     def export_fits_prisim(self,fitsfile,pol_list,freq_list,scheme='RING',nside_out=None):
         '''
