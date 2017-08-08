@@ -12,12 +12,14 @@ parser.add_option('-o','--output',dest='outputdir',help="output directory")
 beamdirs=open(options.beamdirlist).readlines()
 fstrlist=open(options.freqlist).readlines()
 for beamdir in beamdirs:
-    beamname=beamdir.split('/')[-1]
+    beamname=beamdir.split('/')[-1][:-1]
     beam=Beam(pols=['X'],rotateY=True,rotatexz=True,invert=True)
     flist=[re.sub('\n','',(beamdir+'/farfield (f=%s) [1].txt')%(s)) for s in fstrlist]
     beam.read_files(fstrlist,flist)
-    beam.export_fits_prisim(options.outputdir+beamname+'.fits')
-
+    freqlist=np.array([float(f) for f in fstrlist])*1e6
+    beam.export_fits_prisim(options.outputdir+beamname+'.fits',['I'],
+                            freqlist)
+    beam.export_beam_integrals(options.outputdir+beamname+'_integrals')
 
 
 
