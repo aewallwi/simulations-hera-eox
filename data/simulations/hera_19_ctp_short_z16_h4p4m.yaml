@@ -28,7 +28,7 @@ dirstruct:
     rootdir     : '/Users/aaronew/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/'
                                 # Base directory
 
-    project     : 'hera_19_ctp_tall_z16_h4p4m'
+    project     : 'hera_19_ctp_short_z16_h4p4m'
                                 # Directory for the project under
                                 # rootdir. Will be created if it
                                 # does not exist
@@ -358,7 +358,7 @@ beam    :
                                 # AN=Abraham Neben
                                 # DD=Dave DeBoer, or 'HERA-CST'
 
-    pol             : 'X'
+    pol             : 'I'
                                 # Beam polarization. Accepted values
                                 # are 'X' and 'Y'
 
@@ -831,7 +831,7 @@ processing:
                                 # to true use single precision, if
                                 # false, use double precision
 
-    cleanup         : 0
+    cleanup         : 3
                                 # Level of cleanup [0-3]. If set to 
                                 # 0, no cleanup is performed and even
                                 # intermediate files are saved. If
@@ -955,7 +955,7 @@ diagnosis   :
                                 # If set to null (default), this
                                 # will be set to 2 seconds
 
-    wait_after_run  : true
+    wait_after_run  : false
                                 # If true, keep python shell open
                                 # after completing the run using
                                 # set_trace() of python debugger.
