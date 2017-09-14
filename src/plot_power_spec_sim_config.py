@@ -20,6 +20,7 @@ import scipy.interpolate as interp
 import gainData as gd
 import argparse
 import delayGridding.py as dg
+import glob
 
 PI=np.pi
 C=299792458.
@@ -78,6 +79,7 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,deltaz,blindex,lst,ax,
     band_select=freqs_select.max()-freqs_select.min()
     delays=np.arange(-nf/2,nf/2)/(nf*df)
     kparas=cosmology.eta2kpara(delays,z0)/LITTLEH
+    band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=0.05,fMax=0.150)
     _,kernel=band_pass.interpolate_subband(nf,df*1e-9,f0*1e-9)
     kernel=np.abs(kernel)**2.
     dtv=dg.delayTransformVisibilities(data['skyvis_freq'][[blindex],select,lstbin],df,kernel=kernel)
@@ -126,12 +128,16 @@ windows=[]
 labels=[]
 modellist=[]
 
+firstline=True
+wdir=''
 for line in open(inputfile).readlines():
     if not '#' in line:
+        if firstline:
+            wdir=line[:-1]
         line_items=line.split(',')
-        simfiles.append(line_items[0])
-        bandpassfiles.append(line_items[1])
-        beamPfiles.append(line_items[2])
+        simfiles.append(wdir+line_items[0])
+        bandpassfiles.append(wdir+line_items[1])
+        beamPfiles.append(wdir+line_items[2])
         zs.append(float(line_items[3]))
         deltazs.append(float(line_items[4]))
         blindices.append(int(line_items[5]))
@@ -149,6 +155,7 @@ ax=fig.add_axes([.1,.1,.8,.8])
 for (simfile,bandfile,beamfile,z,deltaz
      ,blindex,lst,lw,color,ls,window,model) in zip(simfiles,bandpassfiles,beamPfiles,zs,deltazs,blindices,lsts,
                                                    lws,colors,lss,windows,modellist):
+    simfile=glob.glob(simfile+'/*')[0]+'/simvis/simvis.npz'
     ps_line(simfile,bandpassfile,beamfile,z,deltaz,blindex,lst,ax,lw,color,ls,window,label,model)
 
 ax.grid()
@@ -164,7 +171,6 @@ if not output is None:
 
 plt.show()
 
-    
     
 
 
