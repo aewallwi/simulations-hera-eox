@@ -338,10 +338,12 @@ class GainData():
         '''
         change_nfi=False
         fMin=f0-nfi/2*df
+        print fMin
         if fMin < self.fAxis.min():
             fMin=self.fAxis.min()
             change_nfi=True
         fMax=f0+(nfi/2-1)*df
+        print fMax
         if fMax > self.fAxis.max():
             fMax=self.fAxis.max()
             change_nfi=True
