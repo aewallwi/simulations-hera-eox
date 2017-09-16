@@ -108,7 +108,8 @@ def z2f(z):
 #convert from delta z to a delta f
 def dz2df(dz,z):
     return -f21*dz/(1+z)**2.
-    
+def df2dz(df,z):
+    return -df/f21*(1+z)**2.
 
 #convert a flux cube into a temperature cube
 #freqaxis is list of frequency values (Hz)
