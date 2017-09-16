@@ -52,7 +52,7 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,deltaz,blindex,lst,ax,
     freqs=data['freq']
     df=np.abs(freqs[1]-freqs[0])
     beamIntegrals=np.load(beamPfile)
-    print('lst=%s'%(data['lst']))
+    #print('lst=%s'%(data['lst']))
     lstbin=np.where(np.abs(data['lst']-lst)\
                     ==np.abs(data['lst']-lst).min())[0][0]
     f0=cosmology.z2f(z0)
@@ -64,7 +64,7 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,deltaz,blindex,lst,ax,
         window_t=np.append(window_t,window_t[-1])
     window_t/=window_t.max()
     wnorm=np.sqrt(np.mean(np.abs(window_t)**2.))
-    print('deltaz=%s'%(deltaz))
+    #print('deltaz=%s'%(deltaz))
     bwidth=-cosmology.dz2df(wnorm*deltaz,z0)
     flow=f0-bwidth/2.
     fhigh=f0+bwidth/2.
@@ -83,15 +83,17 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,deltaz,blindex,lst,ax,
         band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=0.05,fMax=0.150)
         _,kernel=band_pass.interpolate_subband(nf,df*1e-9,f0*1e-9)
         kernel=np.abs(kernel)**2.
+        figk=plt.figure()
+        axk=figk.add_axes([.1,.1,.8,.8])
+        axk.plot(freqs_select,kernel)
     else:
-        kernel=None
+        kernel=np.ones(nf)
     vis=np.array([data['skyvis_freq'][[blindex],select,lstbin]]).T
-    print(vis.shape)
-    
+    #print(vis.shape)
     dtv=np.abs(dg.delayTransformVisibilities(vis,df,kernel=kernel))**2.
     integralchan=np.where(np.abs(beamIntegrals[:,0]*1e6-f0)==np.min(np.abs(beamIntegrals[:,0]*1e6-f0)))[0][0]
     ps=dg.delaySq2Ps(dtv,f0,beamIntegrals[integralchan,2],bwidth).squeeze()
-    print('ps=%s'%(ps))
+    #print('ps=%s'%(ps))
     ps_line=ax.plot(kparas,ps,ls=ls,lw=lw,color=color,label=label)
     if horizon:
         horzn=cosmology.eta2kpara(data['bl_length'][blindex]/C,z0)/LITTLEH
@@ -138,7 +140,7 @@ for line in open(inputfile).readlines():
     if not '#' in line:
         if firstline:
             wdir=line[:-1]
-            print('wdir=%s'%(wdir))
+            #print('wdir=%s'%(wdir))
             firstline=False
         else:
             line_items=line.split(',')
@@ -162,18 +164,18 @@ for line in open(inputfile).readlines():
 
 fig=plt.figure()
 myax=fig.add_axes([.1,.1,.8,.8])
-print simfiles
-print bandpassfiles
-print beamPfiles
-print zs
-print deltazs
-print blindices
-print lsts
-print lws
-print colors
-print lss
-print windows
-print modellist
+#print simfiles
+#print bandpassfiles
+#print beamPfiles
+#print zs
+#print deltazs
+#print blindices
+#print lsts
+#print lws
+#print colors
+#print lss
+#print windows
+#print modellist
 
 
 for (simfile,bandfile,beamfile,z,deltaz
