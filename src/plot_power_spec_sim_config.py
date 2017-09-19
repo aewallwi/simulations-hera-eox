@@ -27,8 +27,44 @@ PI=np.pi
 C=299792458.
 LITTLEH=0.68
 
+
+
+def gen_ps_signal(fAxis,uVal,beampp=1.,flux=True,ntimes=1):
+    fc=fAxis[len(fAxis)/2]
+    zc=cosmology.f2z(fc)
+    delays=fft.fftshift(fft.fftfreq(len(fAxis),fAxis[1]-fAxis[0]))
+    kParVals=cosmology.eta2kpara(delays,zc)
+    kPerpVal=cosmology.u2kperp(uVal,zc)
+    kvals=np.sqrt(kPerpVal**2.+kParVals**2.)
+    stdPS=np.sqrt(getPower.ps21(np.abs(kvals),np.ones(len(kvals))*zc,flux=flux,beampp=beampp,band=fAxis.max()-fAxis.min()))
+    #fit to power law and fill in where zero
+    if(np.any(stdPS==0)):
+        if( len(stdPS[stdPS==0])==1):
+            posFit=np.logical_and(delays>0,delays<=500e-9)
+            ppos,_=op.curve_fit(lambda x,a,b: a*np.abs(1+x)**b, delays[posFit],stdPS[posFit],p0=[np.std(stdPS),-1])
+            stdPS[stdPS==0]=ppos[0]*(1+0)**ppos[1]
+        else:
+            isZero=stdPS==0
+            minDelay=delays[isZero].max()
+    #fit pos and neg
+            posFit=np.logical_and(delays>minDelay,delays<=10*minDelay)
+            negFit=np.logical_and(-delays>minDelay,-delays<=10*minDelay)
+            ppos,_=op.curve_fit(lambda x,a,b: a*np.abs(1+x)**b, delays[posFit],stdPS[posFit],p0=[np.std(stdPS),-1])
+            pneg,_=op.curve_fit(lambda x,a,b: a*np.abs(1+x)**b, delays[negFit],stdPS[negFit],p0=[np.std(stdPS),-1])
+            posFill=np.logical_and(delays>=0,delays<=minDelay)
+            stdPS[posFill]=ppos[0]*(1+delays[posFill])**ppos[1]
+            negFill=np.logical_and(-delays>=0,-delays<=minDelay)
+            stdPS[negFill]=pneg[0]*(1+delays[negFill])**pneg[1]
+    psInstance=(np.random.randn(len(stdPS),ntimes)+1j*np.random.randn(len(stdPS),ntimes))/np.sqrt(2.)
+    for mm in range(ntimes):
+        psInstance[:,mm]*=stdPS
+    return stdPS,psInstance
+
+
+
+
 def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
-            lw=2,color='k',ls='-',wind='Blackman-Harris',label=None,model=False,horizon=False):
+            lw=2,color='k',ls='-',wind='Blackman-Harris',label=None,model=False,horizon=False,signalsim=True):
     '''
     function to plot power spectrum line
     Args:
@@ -90,23 +126,45 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
         band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=0.05,fMax=0.150)
         _,kernel=band_pass.interpolate_subband(nf,df*1e-9,f0*1e-9)
         kernel=np.abs(kernel)**2.
-        figk=plt.figure()
-        axk=figk.add_axes([.1,.1,.8,.8])
-        axk.plot(freqs_select,kernel)
+        #figk=plt.figure()
+        #axk=figk.add_axes([.1,.1,.8,.8])
+        #axk.plot(freqs_select,kernel)
     else:
         kernel=np.ones(nf)
-    print('blindex=%d'%blindex)
-    print('bl_len=%.2f'%data['bl_length'][blindex])
+    #print('blindex=%d'%blindex)
+    #print('bl_len=%.2f'%data['bl_length'][blindex])
     vis=np.array([data['skyvis_freq'][[blindex],select,lstbin]]).T
     #print(vis.shape)
+    
     dtv=np.abs(dg.delayTransformVisibilities(vis,df,kernel=kernel,wind=window))**2.
+    #print('dtv=%s'%(dtv))
     integralchan=np.where(np.abs(beamIntegrals[:,0]*1e6-f0)==np.min(np.abs(beamIntegrals[:,0]*1e6-f0)))[0][0]
     ps=dg.delaySq2Ps(dtv,f0,beamIntegrals[integralchan,2],bwidth).squeeze()
+    
+    if signalsim:
+        instances=100
+        pssignals=np.zeros(nf)
+        uval=data['bl_length'][blindex]/C*f0
+        _,signals=gen_ps_signal(freqs_select,uval,beampp=beamIntegrals[integralchan,2],flux=True,ntimes=100)
+        signalsvis=fft.fftshift(fft.ifft(fft.fftshift(signals,axes=[0]),axis=0),axes=[0])/(df)
+        for m in range(instances):
+            visd=np.array([signalsvis[:,m].squeeze()]).T
+            dtvsig=np.abs(dg.delayTransformVisibilities(visd,df,kernel=kernel,wind=window))**2.
+            
+            pssignal=dg.delaySq2Ps(dtvsig,f0,beamIntegrals[integralchan,2],bwidth).squeeze()
+            pssignals=pssignals+pssignal
+        pssignals/=instances
+        ps+=pssignals
+        
+    
     #print('ps=%s'%(ps))
-    ps_line=ax.plot(kparas,ps,ls=ls,lw=lw,color=color,label=label)
+    psl=ax.plot(kparas,ps,ls=ls,lw=lw,color=color,label=label)
+
+    
+    
     if horizon:
         horzn=cosmology.eta2kpara(data['bl_length'][blindex]/C,z0)/LITTLEH
-        print('hrzn=%.2f'%horzn)
+        #print('hrzn=%.2f'%horzn)
         ax.axvline(horzn,color='k',ls='--')
         ax.axvline(-horzn,color='k',ls='--')
     if model:
@@ -114,7 +172,10 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
         zvals=np.ones_like(kvals)*z0
         model_ps=getPower.ps21(kvals,zvals)
         model_line=ax.plot(kparas,model_ps,color='k',lw=4,label='21cmFAST')
+
     return kernel*window_t
+
+
 
 parser=argparse.ArgumentParser(description='Plot delay power spectrum for PRISIM simulations with and without bandpass.')
 parser.add_argument('--input','-i',dest='input',type=str,
@@ -169,8 +230,8 @@ for line in open(inputfile).readlines():
             lss.append(line_items[9])
             windows.append(line_items[10])
             labels.append(line_items[11])
-            horizons.append(line_items[12])
-            modellist.append(bool(line_items[13]))
+            horizons.append(bool(line_items[12]=='True'))
+            modellist.append(bool(line_items[13][:-1]=='True'))
 
 fig=plt.figure()
 myax=fig.add_axes([.1,.1,.8,.8])
@@ -186,7 +247,7 @@ myax=fig.add_axes([.1,.1,.8,.8])
 #print lss
 #print windows
 #print modellist
-
+#print('models=%s'%(modellist))
 
 for (simfile,bandfile,beamfile,z,bwidth
      ,blindex,lst,lw,color,ls,window,
@@ -218,14 +279,14 @@ if samez:
 sameb=np.all(np.array(blindices)==blindices[0])
 samedz=np.all(np.array(bwidths)==bwidths[0])
 windowkernel/=windowkernel.max()
-print('mean=%.2f'%np.sqrt(np.mean(windowkernel**2.)))
-delta_z_eff=cosmology.df2dz(bwidths[0],zs[0])*np.sqrt(np.mean((windowkernel)**2.))
+#print('mean=%.2f'%np.sqrt(np.mean(windowkernel**2.)))
+delta_z_eff=-cosmology.df2dz(bwidths[0],zs[0])*np.sqrt(np.mean((windowkernel)**2.))
 
 
 
 if sameb and samedz and samez:
     data=np.load(simfile)
-    myax.text(-0.6,1e8,'b=%.2f\n$\\Delta z=%.1f$\nLST=%.1f hours\nz=%.2f'%(data['bl_length'][blindex],delta_z_eff,lsts[0]/15.,zs[0]),fontsize=20)
+    myax.text(-0.6,1e8,'b=%.2f\n$\\Delta z=%.1f$\nLST=%.1f hours\nz=%.2f'%(data['bl_length'][blindex],delta_z_eff,lsts[0]/15.,zs[0]),fontsize=16)
         
 
 
@@ -234,8 +295,9 @@ if sameb and samedz and samez:
 myax.set_yscale('log')
 myax.set_xlabel('$k_\\parallel$ ($h$Mpc$^{-1}$)')
 myax.set_ylabel('P(k) $h^{-3}$Mpc$^3$mK$^2$')
-myax.legend(loc='best')
-#add delay axis
+myax.legend(loc='upper right')
+fig.set_size_inches(10,8)
+
 
 
 
