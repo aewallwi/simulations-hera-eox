@@ -5,6 +5,9 @@ pi=n.pi
 import copy
 import scipy.optimize as op
 c=299792458
+DEBUG=False
+if DEBUG:
+    import matplotlib.pyplot as plt
 
 
 #take a cut through a beam
@@ -65,6 +68,9 @@ class Beam:
         if(self.invert):
             self.data[pol,chan,:]=rotateBeam(self.data[pol,chan,:].flatten(),rot=[0,180,0])
         self.data[pol,chan,theta>90.]=0.
+        #if DEBUG:
+        #    hp.mollview(self.data[pol,chan,:])
+        #    plt.show()
     def read_files(self,flist,filelist):
         self.nf=len(flist)
         self.fAxis=n.zeros(self.nf)
@@ -84,12 +90,28 @@ class Beam:
             qind=n.where(n.array(self.pols)=='Q')[0][0]
             for p in range(self.npolsOriginal):
                 self._interp_beam(filelist[p*self.nf+chan],p,chan)
+                #if DEBUG:
+                #    print('showing x')
+                #    hp.mollview(self.data[xind,chan,:],rot=(0,90))
+                #    plt.show()
             if self.rotateY and self.npolsOriginal==1:
-                self.data[yind,chan,:]=rotateBeam(self.data[xind,chan,:].flatten(),rot=[0,0,90])
+                self.data[yind,chan,:]=rotateBeam(self.data[xind,chan,:].flatten(),rot=[90,0,0])
+                #if DEBUG:
+                #    print('showing y')
+                #    hp.mollview(self.data[yind,chan,:],rot=(0,90))
+                #    plt.show()
             if 'I' in self.pols:
                 self.data[iind,chan,:]=0.5*(self.data[xind,chan,:]+self.data[yind,chan,:])
+                #if DEBUG:
+                #    print('showing I')
+                #    hp.mollview(self.data[iind,chan,:],rot=(0,90))
+                #    plt.show()
             if 'Q' in self.pols:
                 self.data[qind,chan,:]=0.5*(self.data[xind,chan,:]-self.data[yind,chan,:])
+                #if DEBUG:
+                #    print('showing Q')
+                #    hp.mollview(self.data[qind,chan,:],rot=(0,90))
+                #    plt.show()
             for pol in range(self.npols):
                 self.solidAngles[pol,chan]=self.pixArea*n.sum(self.data[pol,chan])
                 self.solidAnglesSq[pol,chan]=self.pixArea*n.sum(self.data[pol,chan]**2.)
@@ -131,7 +153,7 @@ class Beam:
             assert freq in self.fAxis
             freq_inds.append(n.where(n.array(self.fAxis)==freq)[0][0])
         data=self.data[:,freq_inds,:].reshape(-1,1)
-        theta_out,phi_out=hp.pix2ang(self.nside,n.arange(hp.nside2npix(nside_out)))
+        theta_out,phi_out=hp.pix2ang(nside_out,n.arange(hp.nside2npix(nside_out)))
         #freq_col=[fits.Column(name='Frequency [MHz]',format='D',array=n.array(freq_list))]
         #freq_columns=fits.ColDefs(freq_col,ascii=False)
         #freq_tbhdu = fits.BinTableHDU.from_columns(freq_col)
@@ -153,11 +175,13 @@ class Beam:
             freq_tbhdu=fits.ImageHDU(freq_list,name='FREQS_{0}'.format(pol))
             fits.append(fitsfile,freq_tbhdu.data,freq_tbhdu.header,verify=False)
         data_interp=n.zeros((hp.nside2npix(nside_out),len(freq_inds)))
-        
         for polind,pol in zip(pol_inds,pol_list):
             for fi,freqind in enumerate(freq_inds):
                 data=self.data[polind,freqind,:].flatten()
                 data_interp[:,fi]=hp.get_interp_val(data,theta_out,phi_out)
+                if DEBUG:
+                    hp.mollview(data_interp[:,fi])
+                    plt.show()
             imghdu = fits.ImageHDU(data_interp, name='BEAM_{0}'.format(pol))
             imghdu.header['PIXTYPE'] = ('HEALPIX', 'Type of pixelization')
             imghdu.header['ORDERING'] = (scheme, 'Pixel ordering scheme, either RING or NESTED')
