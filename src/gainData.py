@@ -191,7 +191,8 @@ def readCSTTimeTrace(fileName,comment=''):
         outputTrace2[:,0]*=tFactor
     if np.mod(len(inputTrace),2)==1:
         outputTrace1=outputTrace1[:-1,:]
-        outputTrace2=outputTrace2[:-1,:]
+        if len(outputTrace2)>0:
+            outputTrace2=outputTrace2[:-1,:]
         inputTrace=inputTrace[:-1,:]
     meta=MetaData(device='CST',dtype=['TIME',dtype],datarange=[inputTrace[:,0].min(),inputTrace[:,0].max(),len(inputTrace[:,0])],comment=comment)
     return [inputTrace,outputTrace1,outputTrace2],meta
@@ -249,8 +250,8 @@ class GainData():
             fMax=self.fAxis.max()
 
         if(extrapolateBand):
-            print self.fAxis.min()
-            print self.fAxis.max()
+            #print self.fAxis.min()
+            #print self.fAxis.max()
             if(fMin<self.fAxis.min()):
                 fitSelection=self.fAxis<self.fAxis.min()+.01
                 pReal=np.polyfit(self.fAxis[fitSelection],np.real(self.gainFrequency[fitSelection]),1)
@@ -292,7 +293,7 @@ class GainData():
         self.gainFrequency=self.gainFrequency[selection]
         if(windowFunction== 'blackman-harris'):
             wF=signal.blackmanharris(len(self.fAxis))
-            wF/=np.sqrt(np.mean(wF**2.))
+            #wF/=np.sqrt(np.mean(wF**2.))
         else:
             wF=np.ones(len(self.fAxis))
         self.tAxis=fft.fftshift(fft.fftfreq(len(self.fAxis),self.fAxis[1]-self.fAxis[0]))
@@ -303,6 +304,26 @@ class GainData():
         self.gainDelay=fft.fftshift(fft.ifft(fft.fftshift(self.gainFrequency*wF)))
 
 
+    def gain_approx(self,gammaF=None,fGammaf=None,domain='freq'):
+        '''
+        approximate gain calculation from Patra 2016 using the zeroth delay. 
+        '''
+        if gammaF is None:
+            gammaF=self.gainDelay[self.fAxis.shape[0]/2]
+        else:
+            fgr=interp.interp1d(fGammaf,gammaF.real)
+            fgi=interp.interp1d(fGammaf,gammaF.imag)
+            gammaF=fgr(self.fAxis)+1j*fgi(self.fAxis)
+        outputGain=(self.gainFrequency-gammaF)*gammaF/(1+gammaF)+(1-gammaF)
+        if domain=='delay':
+            wF=signal.blackmanharris(len(self.fAxis))
+            #wF/=np.sqrt(np.mean(wF**2.))
+            return fft.fftshift(fft.ifft(fft.fftshift(outputGain*wF)))
+        else:
+            return outputGain
+
+
+            
 
     def export_CST_freq_s11(self,outfile):
         '''
@@ -338,12 +359,12 @@ class GainData():
         '''
         change_nfi=False
         fMin=f0-nfi/2*df
-        print fMin
+        #print fMin
         if fMin < self.fAxis.min():
             fMin=self.fAxis.min()
             change_nfi=True
         fMax=f0+(nfi/2-1)*df
-        print fMax
+        #print fMax
         if fMax > self.fAxis.max():
             fMax=self.fAxis.max()
             change_nfi=True
@@ -370,8 +391,11 @@ class GainData():
                     nf-=2
                     selection[maxind]=False
                 
-                
-        sub_band=self.gainFrequency[selection]
+        if self.metaData.dtype[1]=='PlaneWave Excitation':
+            sub_band=self.gainFrequency[selection]
+        else:
+            sub_band=self.gain_approx(domain='freq')[selection]
+        
         sub_fAxis=self.fAxis[selection]
         window=signal.blackmanharris(nf)
         delay_band=fft.fftshift(fft.ifft(fft.fftshift(sub_band*window)))
@@ -391,7 +415,7 @@ class GainData():
         #band_interp[select_ext]=0.
         window_interp_func=interp.interp1d(sub_fAxis,signal.blackmanharris(len(sub_band)))
         wFactor=1./((fAxis_interp.max()-fAxis_interp.min())/(sub_fAxis.max()-sub_fAxis.min()))
-        print wFactor
+        #print wFactor
         band_interp_f=fft.fftshift(fft.fft(fft.fftshift(band_interp)))*wFactor
         window_corr=window_interp_func(fAxis_interp)
         #band_interp_f/=window_corr

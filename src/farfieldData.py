@@ -5,7 +5,7 @@ pi=n.pi
 import copy
 import scipy.optimize as op
 c=299792458
-DEBUG=False
+DEBUG=True
 if DEBUG:
     import matplotlib.pyplot as plt
 
@@ -39,7 +39,7 @@ def rotateBeam(inputMap,rot=[90,0,0]):
 
 
 class Beam:
-    def __init__(self,nside=64,pols=['X','Y'],rotateY=False,invert=False,rotatexz=False):
+    def __init__(self,nside=64,pols=['X','Y'],rotateY=False,invert=False,rotatexz=False,rotatexy=False):
         self.nside=nside
         self.npolsOriginal=len(pols)
         self.nPix=hp.nside2npix(nside)
@@ -48,6 +48,7 @@ class Beam:
         self.pixArea=hp.nside2pixarea(self.nSide)
         self.pols=pols
         self.rotatexz=rotatexz
+        self.rotatexy=rotatexy
         self.rotateY=rotateY
         if(rotateY):
             pols.append('Y')
@@ -62,15 +63,18 @@ class Beam:
         theta=n.round(n.degrees(theta)).astype(int)
         phi=n.round(n.degrees(phi)).astype(int)
         self.data[pol,chan,:]=10**((data[:,2].squeeze().reshape(360,181))[phi,theta]/10.)
-        self.data[pol,chan,:]/=self.data[pol,chan,:].flatten().max();    
+        self.data[pol,chan,:]/=self.data[pol,chan,:].flatten().max();
+        #print('rotatexy='+str(self.rotatexy))
         if self.rotatexz:
             self.data[pol,chan,:]=rotateBeam(self.data[pol,chan,:].flatten(),rot=[0,-90,0])
+        if self.rotatexy:
+            self.data[pol,chan,:]=rotateBeam(self.data[pol,chan,:].flatten(),rot=[-90,0,90])
         if(self.invert):
             self.data[pol,chan,:]=rotateBeam(self.data[pol,chan,:].flatten(),rot=[0,180,0])
-        self.data[pol,chan,theta>90.]=0.
         #if DEBUG:
         #    hp.mollview(self.data[pol,chan,:])
-        #    plt.show()
+        #   plt.show()
+        self.data[pol,chan,theta>90.]=0.
     def read_files(self,flist,filelist):
         self.nf=len(flist)
         self.fAxis=n.zeros(self.nf)
@@ -179,9 +183,9 @@ class Beam:
             for fi,freqind in enumerate(freq_inds):
                 data=self.data[polind,freqind,:].flatten()
                 data_interp[:,fi]=hp.get_interp_val(data,theta_out,phi_out)
-                if DEBUG:
-                    hp.mollview(data_interp[:,fi])
-                    plt.show()
+                #if DEBUG:
+                #    hp.mollview(data_interp[:,fi])
+                #    plt.show()
             imghdu = fits.ImageHDU(data_interp, name='BEAM_{0}'.format(pol))
             imghdu.header['PIXTYPE'] = ('HEALPIX', 'Type of pixelization')
             imghdu.header['ORDERING'] = (scheme, 'Pixel ordering scheme, either RING or NESTED')

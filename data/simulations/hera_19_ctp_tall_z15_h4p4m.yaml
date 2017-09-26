@@ -25,7 +25,7 @@ preload    :
 dirstruct:
                                 # Directory information
 
-    rootdir     : '/Users/aaronew/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/'
+    rootdir     : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/'
                                 # Base directory
 
     project     : 'hera_19_ctp_tall_z15_h4p4m'
@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/aaronew/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/ctp_beams_tall/run000002.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/ctp_beams_tall/run000002.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if

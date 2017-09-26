@@ -64,7 +64,7 @@ def gen_ps_signal(fAxis,uVal,beampp=1.,flux=True,ntimes=1):
 
 
 def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
-            lw=2,color='k',ls='-',wind='Blackman-Harris',label=None,model=False,horizon=False,signalsim=True):
+            lw=2,color='k',ls='-',wind='Blackman-Harris',label=None,model=False,horizon=False,signalsim=False):
     '''
     function to plot power spectrum line
     Args:
@@ -168,7 +168,7 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
         ax.axvline(horzn,color='k',ls='--')
         ax.axvline(-horzn,color='k',ls='--')
     if model:
-        kvals=np.sqrt(kparas**2.+(cosmology.u2kperp(data['bl_length'][blindex]/C*f0,z0)/LITTLEH)**2)
+        kvals=np.sqrt(kparas**2.*LITTLEH**2.+(cosmology.u2kperp(data['bl_length'][blindex]/C*f0,z0))**2.)
         zvals=np.ones_like(kvals)*z0
         model_ps=getPower.ps21(kvals,zvals)
         model_line=ax.plot(kparas,model_ps,color='k',lw=4,label='21cmFAST')
@@ -275,6 +275,7 @@ if samez:
     myax_t.set_xticklabels(labels)
     myax_t.set_xlim(myax.get_xlim())
     myax_t.set_ylim(1e3,1e17)
+    myax_t.set_title('$\\tau$(ns)',y=1.05)
 
 sameb=np.all(np.array(blindices)==blindices[0])
 samedz=np.all(np.array(bwidths)==bwidths[0])
