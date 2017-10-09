@@ -106,6 +106,8 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
     fhigh=f0+bwidth/2.
     select=np.logical_and(freqs>=flow,freqs<fhigh)
     freqs_select=freqs[select]
+    print('min freq=%.2e'%freqs_select.min())
+    print('max freq=%.2e'%freqs_select.max())
     nf=len(freqs_select)
     if np.mod(nf,2)==1:
         maxind=np.where(select)[0].max()
@@ -123,7 +125,7 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
     delays=np.arange(-nf/2,nf/2)/(nf*df)
     kparas=cosmology.eta2kpara(delays,z0)/LITTLEH
     if not bandpassfile=='':
-        band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=0.05,fMax=0.150)
+        band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=flow/2./1e9,fMax=flow*2/1e9)
         _,kernel=band_pass.interpolate_subband(nf,df*1e-9,f0*1e-9)
         kernel=np.abs(kernel)**2.
         #figk=plt.figure()
@@ -183,12 +185,16 @@ parser.add_argument('--input','-i',dest='input',type=str,
 parser.add_argument('--output','-o',dest='output',type=str,
                     help=('Name of output file. Default None will cause no output to be written.'), default=None)
 parser.add_argument('--title','-t',dest='title',type=str,default='',help='Title for the plot.')
+parser.add_argument('--baseline','-b',dest='baseline',type=int,default=None,
+                    help=('Baseline number to plot for all. Overrides baselien in each line. If None,'
+                          'will plot individual baselines in config file.'))
 
 args=parser.parse_args()
 
 inputfile=args.input
 output=args.output
 title=args.title
+blmaster=args.baseline
 
 simfiles=[]
 bandpassfiles=[]
@@ -223,7 +229,10 @@ for line in open(inputfile).readlines():
             beamPfiles.append(wdir+line_items[2])
             zs.append(float(line_items[3]))
             bwidths.append(float(line_items[4]))
-            blindices.append(int(line_items[5]))
+            if blmaster is None:
+                blindices.append(int(line_items[5]))
+            else:
+                blindices.append(blmaster)
             lsts.append(float(line_items[6]))
             lws.append(float(line_items[7]))
             colors.append(line_items[8])
