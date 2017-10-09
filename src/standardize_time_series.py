@@ -7,7 +7,7 @@
 import scipy.interpolate as interp
 import numpy as np
 import argparse
-
+DEBUG=True
 
 #Read CST time trace file
 def readTrace(fileName,comment=''):
@@ -30,22 +30,22 @@ def readTrace(fileName,comment=''):
     hout2=''
     hin=''
     while lNum <len(dataLines):
-        if('o1' in dataLines[lNum]):
+        if('o1' in dataLines[lNum] or 'Port1' in dataLines[lNum]):
             thisTrace=outputTrace1
-            hout1=dataLines[lNum]
+            hout1=dataLines[lNum]+dataLines[lNum+1]
             lNum+=2
-        elif('o2' in dataLines[lNum]):
+        elif('o2' in dataLines[lNum] or 'Port2' in dataLines[lNum]):
             thisTrace=outputTrace2
-            hout2=dataLines[lNum]
+            hout2=dataLines[lNum]+dataLines[lNum+1]
             lNum+=2
         elif('i1' in dataLines[lNum]):
             thisTrace=inputTrace
-            hin=dataLines[lNum]
+            hin=dataLines[lNum]+dataLines[lNum+1]
             lNum+=2
             dtype='Terminal Excitation'
         elif('Plane wave' in dataLines[lNum]):
             thisTrace=inputTrace
-            hin=dataLines[lNum]
+            hin=dataLines[lNum]+dataLines[lNum+1]
             lNum+=2
             dtype='PlaneWave Excitation'
         else:
@@ -56,10 +56,10 @@ def readTrace(fileName,comment=''):
     inputTrace=np.array(inputTrace)
     outputTrace1=np.array(outputTrace1)
     outputTrace2=np.array(outputTrace2)
-    print('len(inputtrace=%d'%(len(inputTrace)))
-    print('len(outputtrace=%d'%(len(outputTrace1)))
-    inputTrace[:,0]*=tFactor
-    outputTrace1[:,0]*=tFactor
+    if len(inputTrace)>0:
+        inputTrace[:,0]*=tFactor
+    if len(outputTrace1)>0:
+        outputTrace1[:,0]*=tFactor
     if(len(outputTrace2)>0):
         outputTrace2[:,0]*=tFactor
     if np.mod(len(inputTrace),2)==1:
@@ -69,7 +69,7 @@ def readTrace(fileName,comment=''):
             outputTrace2=outputTrace2[:-1,:]
         if len(inputTrace)>0:
             inputTrace=inputTrace[:-1,:]
-    return [inputTrace,outputTrace1,outputTrace2],dtype
+    return [inputTrace,outputTrace1,outputTrace2],[hin,hout1,hout2]
 
 parser=argparse.ArgumentParser(description='Standardize interpolation time-series.')
 parser.add_argument('--inputsignal','-i',dest='input',type=str,
@@ -90,30 +90,38 @@ if outputfile is None:
     headero=headers[1]
 else:
     tracesi,headersi=readTrace(inputfile)
-    traceso,headerso=readTrace(inputfile)
+    traceso,headerso=readTrace(outputfile)
     tracei=tracesi[0]
     traceo=traceso[1]
-    headeri=tracesi[0]
-    headero=traceso[1]
-
-tmin=np.max([traci[:,0],traceo[:,0]])
-tmax=np.min([traci[:,-1],traceo[:,-1]])
-nsamples=len(tmin)
+    headeri=headersi[0]
+    headero=headerso[1]
+tmin=np.max([tracei[0,0],traceo[0,0]])
+tmax=np.min([tracei[-1,0],traceo[-1,0]])
+nsamples=len(tracei)
 #make sure interpolation axis is even in length.
 if np.mod(nsamples,2)==1:
     nsamples+=1
-tinterp=np.linspace(tmin,tmax,nsampes,endpoint=False)
+tinterp=np.linspace(tmin,tmax,nsamples,endpoint=False)
 #perofmr interpolation
-interp_i=interp.interp1d(tinterp,tracei)(tinterp)
-interp_o=interp.interp1d(tinterp,traceo)(tinterp)
+interp_i=interp.interp1d(tracei[:,0],tracei[:,1])(tinterp)
+interp_o=interp.interp1d(traceo[:,0],traceo[:,1])(tinterp)
 #write everything out to a single file.
-ofile=open(outputname,'w')
+ofile=open(outputname,'wb')
 ofile.write(headeri)
+#if DEBUG:
+#    import matplotlib.pyplot as plt
+#    plt.plot(tracei[:,0],tracei[:,1],color='k')
+#    plt.plot(traceo[:,0],traceo[:,1],color='r')
+#    print('max output=%.1f'%(traceo[:,1].max()))
+#    print('max output interp=%.1f'%(interp_o.max()))
+#    plt.plot(tinterp[::10],interp_i[::10],marker='o',color='k',ls='None')
+#    plt.plot(tinterp[::10],interp_o[::10],marker='o',color='r',ls='None')
+#    plt.show()
 for lnum in range(nsamples):
-    ofile.write('%.10f \t %.10f\n'%(tinterp[lnum],interp_i[lnum]))
+    ofile.write('%.10e               %.10e\n'%(tinterp[lnum],interp_i[lnum]))
 ofile.write(headero)
 for lnum in range(nsamples):
-    ofile.write('%.10f \t %.10f\n'%(tinterp[lnum],interp_o[lnum]))
+    ofile.write('%.10e               %.10e\n'%(tinterp[lnum],interp_o[lnum]))
 ofile.close()
 
 
