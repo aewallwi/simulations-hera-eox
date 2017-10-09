@@ -4,7 +4,7 @@ from astropy.io import fits
 pi=n.pi
 import copy
 import scipy.optimize as op
-c=299792458
+c=299792458.
 DEBUG=True
 if DEBUG:
     import matplotlib.pyplot as plt
@@ -58,11 +58,20 @@ class Beam:
         self.npols=len(self.pols)
             
     def _interp_beam(self,beam_file,pol,chan):
+        line0=open(beam_file).readlines()[0]
+        if 'dBi' in line0:
+            db=True
+        else:
+            db=False
+        print('db='+str(db))
         data=n.loadtxt(beam_file,skiprows=2);
         theta,phi=hp.pix2ang(self.nSide,range(self.nPix))
         theta=n.round(n.degrees(theta)).astype(int)
         phi=n.round(n.degrees(phi)).astype(int)
-        self.data[pol,chan,:]=10**((data[:,2].squeeze().reshape(360,181))[phi,theta]/10.)
+        if dB:
+            self.data[pol,chan,:]=10**((data[:,2].squeeze().reshape(360,181))[phi,theta]/10.)
+        else:
+            self.data[pol,chan,:]=(data[:,2].squeeze().reshape(360,181))[phi,theta]
         self.data[pol,chan,:]/=self.data[pol,chan,:].flatten().max();
         #print('rotatexy='+str(self.rotatexy))
         if self.rotatexz:
@@ -71,11 +80,14 @@ class Beam:
             self.data[pol,chan,:]=rotateBeam(self.data[pol,chan,:].flatten(),rot=[-90,0,90])
         if(self.invert):
             self.data[pol,chan,:]=rotateBeam(self.data[pol,chan,:].flatten(),rot=[0,180,0])
-        #if DEBUG:
-        #    hp.mollview(self.data[pol,chan,:])
-        #   plt.show()
+        if DEBUG:
+            hp.mollview(self.data[pol,chan,:])
+            plt.show()
         self.data[pol,chan,theta>90.]=0.
     def read_files(self,flist,filelist):
+        #if DEBUG:
+        #    print flist
+        #    print filelist
         self.nf=len(flist)
         self.fAxis=n.zeros(self.nf)
         self.data=n.zeros((self.npols,self.nf,self.nPix))   
