@@ -68,7 +68,7 @@ class Beam:
         theta,phi=hp.pix2ang(self.nSide,range(self.nPix))
         theta=n.round(n.degrees(theta)).astype(int)
         phi=n.round(n.degrees(phi)).astype(int)
-        if dB:
+        if db:
             self.data[pol,chan,:]=10**((data[:,2].squeeze().reshape(360,181))[phi,theta]/10.)
         else:
             self.data[pol,chan,:]=(data[:,2].squeeze().reshape(360,181))[phi,theta]
