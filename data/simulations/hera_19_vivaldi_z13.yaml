@@ -28,7 +28,7 @@ dirstruct:
     rootdir     : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/'
                                 # Base directory
 
-    project     : 'hera_19_convertible_z13'
+    project     : 'hera_19_vivaldi_z13'
                                 # Directory for the project under
                                 # rootdir. Will be created if it
                                 # does not exist
