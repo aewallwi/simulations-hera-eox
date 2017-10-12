@@ -1,0 +1,32 @@
+#************************************************************
+#Aaron Ewall-Wice
+#aaron.m.ewall-wice@jpl.nasa.gov
+#September 14th 2017
+#test configuraiton to create power spectrum plots from PRISIM.
+#************************************************************
+#The first non commented line should be a root directory for the analysis
+/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/
+#/Users/aaronew/Dropbox_MIT/Science/simulations-hera-eox/data/
+#
+#This is an example configuration file for plotting power spectra. The columns should be separated by commas
+#each line is a simulation and instrument configuration to plot. 
+#1) Data file subdir,
+#2)bandpass file name,
+#3)beam integral file name,
+#4)redshift,
+#5)redshift interval,
+#6)LST
+#7)line width
+#8)line color
+#9)line style
+#10)window function
+#11)line label
+#12)include plot of corresponding 21cm model
+#13) include plot of horizon lines
+#************************************************************
+simulations/hera_19_vivaldi_z08_lst0_pointsource,timetraces/Vivaldi/vivaldi_interp.txt,simulations/Vivaldi_Beams/Vivaldi-Gain_integrals.npy,08,20e6,9,60.,2,red,-,Nithya,Vivaldi point sources,True,True
+simulations/hera_19_sinuous_gr_0.5_bh_90_z08_lst0,timetraces/Vivaldi/sinuous_interp.txt,simulations/Sinuous_Beams/beamSinuous_gr_0.5_r175_band_skirt_0.3_backplane_90_integrals.npy,08,20e6,9,60.,2,orange,-,Nithya,Sinuous GR=0.5 bp=90cm points source,False,False
+simulations/hera_19_highband_z08_lst0_pointsource,timetraces/Vivaldi/hera_interp.txt,simulations/Beams_HighBand/beamSouthAfricaFeedOverDish_integrals.npy,08,20e6,9,60.,2,grey,-,Nithya,High Band point sources,False,False
+simulations/hera_19_vivaldi_z08_lst0,timetraces/Vivaldi/vivaldi_interp.txt,simulations/Vivaldi_Beams/Vivaldi-Gain_integrals.npy,08,20e6,9,60.,2,red,--,Nithya,Vivaldi,True,True
+simulations/hera_19_sinuous_gr_0.5_bh_90_z08_lst0,timetraces/Vivaldi/sinuous_interp.txt,simulations/Sinuous_Beams/beamSinuous_gr_0.5_r175_band_skirt_0.3_backplane_90_integrals.npy,08,20e6,9,60.,2,orange,--,Nithya,Sinuous GR=0.5 bp=90cm,False,False
+simulations/hera_19_highband_z08_lst0_pointsource,timetraces/Vivaldi/hera_interp.txt,simulations/Beams_HighBand/beamSouthAfricaFeedOverDish_integrals.npy,08,20e6,9,60.,2,grey,--,Nithya,High Band,False,False
