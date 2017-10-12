@@ -642,7 +642,7 @@ fgparm   :
                                 # temperature in K or 'Jy' for flux
                                 # density in Jy
 
-    flux_min        : 10.0
+    flux_min        : 3.0
                                 # Flux density lower limit (Jy) to be 
                                 # applied to 'csm', 'mwacs', 'gleam',
                                 # and 'custom' catalogs. If set to
