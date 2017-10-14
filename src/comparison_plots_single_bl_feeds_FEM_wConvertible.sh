@@ -13,4 +13,3 @@ python plot_power_spec_sim_config.py --input compare_feeds_z13_single_bl_FEM_con
 python plot_power_spec_sim_config.py --input compare_feeds_z14_single_bl_FEM_convertible.conf --output feeds_fem_convertible_z14.png
 python plot_power_spec_sim_config.py --input compare_feeds_z15_single_bl_FEM_convertible.conf --output feeds_fem_convertible_z15.png
 python plot_power_spec_sim_config.py --input compare_feeds_z16_single_bl_FEM_convertible.conf --output feeds_fem_convertible_z16.png
-
