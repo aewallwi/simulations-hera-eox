@@ -36,6 +36,7 @@ print('rotatexz=%s'%rotatexz)
     
 for beamdir in beamdirs:
     beamdir=re.sub('\n','',beamdir)
+    beamdirstr=beamdir
     flist_unorg=glob.glob(beamdir+'/*')
     #print beamdir
     #print flist_unorg
@@ -51,8 +52,9 @@ for beamdir in beamdirs:
     #reorder flist according to frequencies
     for f in fstrlist:
         for filename in flist_unorg:
+            filename=filename.split('/')[-1]
             if str(f)[:-1] in filename and not( float(f[:-1])<100 and ('1'+str(f)[:-1] in filename or '2'+str(f)[:-1] in filename)):
-                flist.append(filename)
+                flist.append(beamdirstr+filename)
 
     #print fstrlist
     #print flist
