@@ -1,10 +1,9 @@
 #!/bin/bash
 #source ~/Python/analysis/bin/activate
 source activate prisim
-growthrates=( 0.5 )
-bheights=( 50 )
-zs=( 13 14 15 16 )
-zs=( 06 07 08 09 10 11 12 )
+growthrates=( 0.5 0.8 )
+bheights=( 50 90 )
+zs=( 06 07 08 09 10 11 12 13 14 15 16 )
 export TMPDIR=/tmp/
 for gr in "${growthrates[@]}"; do
     echo $gr
