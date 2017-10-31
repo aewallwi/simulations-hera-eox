@@ -13,7 +13,7 @@ fbase=hirax_adaptive_mesh
 labels=( pass1 pass2 pass3 pass4 pass5 pass6 )
 for label in "${labels[@]}";
 do
-    python standardize_time_series.py -i ${ttdir} -o ${ttdir}${fbase}_${label}_o1.txt -n ${ttdir}${fbase}_interp.txt
+    python standardize_time_series.py -i ${ttdir}/${ifile} -o ${ttdir}${fbase}_${label}_o1.txt -n ${ttdir}${fbase}_${label}_interp.txt
 done
 
 
