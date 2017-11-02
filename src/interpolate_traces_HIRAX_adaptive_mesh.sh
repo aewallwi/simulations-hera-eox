@@ -16,7 +16,7 @@ do
     python standardize_time_series.py -i ${ttdir}/${ifile} -o ${ttdir}${fbase}_${label}_o1.txt -n ${ttdir}${fbase}_${label}_interp.txt
 done
 
-
+python standardize_time_series.py -i ${ttdir}/terminal_excitation_80dB.txt -o ${ttdir}terminal_excitation_80dB.txt -n ${ttdir}terminal_excitation_80dB_interp.txt
 
 
 
