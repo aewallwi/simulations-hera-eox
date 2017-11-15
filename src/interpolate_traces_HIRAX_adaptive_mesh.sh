@@ -17,6 +17,7 @@ do
 done
 
 python standardize_time_series.py -i ${ttdir}/terminal_excitation_80dB.txt -o ${ttdir}terminal_excitation_80dB.txt -n ${ttdir}terminal_excitation_80dB_interp.txt
+python standardize_time_series.py -i ${ttdir}/plane_wave_80dB.txt -o ${ttdir}plane_wave_80dB.txt -n ${ttdir}plane_wave_80dB_interp.txt
 
 
 
