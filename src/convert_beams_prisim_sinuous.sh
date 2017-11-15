@@ -7,4 +7,4 @@
 
 source activate hera_antenna
 
-python cst2prisim_fits.py -b beamlist_sinuous.txt -f freq_list_sinuous.txt -i False -r False -q True -o /Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Sinuous_Beams/
+python cst2prisim_fits.py -b beamlist_sinuous.txt -f freq_list_sinuous.txt -i False -r False -q True -o /Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Sinuous_Beams/ -s True

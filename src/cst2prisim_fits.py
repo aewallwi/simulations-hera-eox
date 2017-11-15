@@ -12,12 +12,14 @@ parser.add_option('-o','--output',dest='outputdir',help="output directory")
 parser.add_option('-r','--rotatexz',dest='rotatexz',help="rotate xz, default=True",default="True")
 parser.add_option('-i','--invert',dest='invert',help="invert beam,default=True",default="True")
 parser.add_option('-q','--rotatexy',dest='rotatexy',help="rotate xy, default=True",default="False")
+parser.add_option('-s','--seperate',dest='seperate',helkp="True if you want seperate beams for each channel",default=False)
 (options,args)=parser.parse_args()
 beamdirs=open(options.beamdirlist).readlines()
 fstrlist=open(options.freqlist).readlines()
 
 assert options.rotatexz in ["True","False"]
 assert options.invert in ["True","False"]
+assert options.seperate in ["True","False"]
 
 if options.rotatexz=="True":
     rotatexz=True
@@ -31,6 +33,10 @@ if options.rotatexy=="True":
     rotatexy=True
 else:
     rotatexy=False
+if options.seperate=="True":
+    seperate_freqs=True
+else:
+    seperate_freqs=False
 print('invert=%s'%invert)
 print('rotatexz=%s'%rotatexz)
     
@@ -61,9 +67,16 @@ for beamdir in beamdirs:
     
     beam.read_files(fstrlist,flist)
     freqlist=np.array([float(f) for f in fstrlist])*1e6
-    beam.export_fits_prisim(options.outputdir+beamname+'.fits',['I'],
-                            freqlist)
-    beam.export_beam_integrals(options.outputdir+beamname+'_integrals')
+    if seperate_freqs:
+        for fnum,freq in enumerate(freqlist):
+            beam.export_fits_prisim(options.outputdir+beamname+'_'+fstrlist[fnum]+'.fits',['I'],
+                                    [freqlist[fnum]])
+            beam.export_beam_integrals(options.outputdir+beamname+'_integrals_'+fstrlist[fnum])
+
+    else:
+        beam.export_fits_prisim(options.outputdir+beamname+'.fits',['I'],
+                                freqlist)
+        beam.export_beam_integrals(options.outputdir+beamname+'_integrals')
 
 
 
