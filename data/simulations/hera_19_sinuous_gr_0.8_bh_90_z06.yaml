@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Sinuous_Beams/beamSinuous_gr_0.8_r175_band_skirt_0.3_backplane_90.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Sinuous_Beams/beamSinuous_gr_0.8_r175_band_skirt_0.3_backplane_90_229.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if

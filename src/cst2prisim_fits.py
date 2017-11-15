@@ -69,9 +69,9 @@ for beamdir in beamdirs:
     freqlist=np.array([float(f) for f in fstrlist])*1e6
     if seperate_freqs:
         for fnum,freq in enumerate(freqlist):
-            beam.export_fits_prisim(options.outputdir+beamname+'_'+fstrlist[fnum]+'.fits',['I'],
+            beam.export_fits_prisim(options.outputdir+beamname+'_'+fstrlist[fnum][:-1]+'.fits',['I'],
                                     [freqlist[fnum]])
-            beam.export_beam_integrals(options.outputdir+beamname+'_integrals_'+fstrlist[fnum])
+            beam.export_beam_integrals(options.outputdir+beamname+'_integrals_'+fstrlist[fnum][:-1])
 
     else:
         beam.export_fits_prisim(options.outputdir+beamname+'.fits',['I'],

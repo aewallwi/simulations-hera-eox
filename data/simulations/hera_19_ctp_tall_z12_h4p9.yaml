@@ -28,7 +28,7 @@ dirstruct:
     rootdir     : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/'
                                 # Base directory
 
-    project     : 'hera_19_sinuous_gr_0.8_bh_90_z09'
+    project     : 'hera_19_ctp_tall_z12_h4p9m'
                                 # Directory for the project under
                                 # rootdir. Will be created if it
                                 # does not exist
@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Sinuous_Beams/beamSinuous_gr_0.8_r175_band_skirt_0.3_backplane_90_148.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/ctp_beams_tall/run000003_110.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if
@@ -369,7 +369,7 @@ beam    :
                                 # all frequencies. if true, beam
                                 # scales with frequency
 
-    select_freq     : 148000000.0
+    select_freq     : 110000000.0
                                 # Frequency (Hz) to use for beam in 
                                 # case of achromatic usage of the beam
                                 # If set to null (default), it defaults
@@ -387,7 +387,7 @@ beam    :
 
 bandpass :
 
-    freq            : 140000000.0
+    freq            : 110000000.0
                                 # Center frequency (in Hz)
                                 # 167.05 MHz for Adam Lidz's cube
 

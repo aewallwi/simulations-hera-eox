@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/ctp_beams_tall/run000003.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/ctp_beams_tall/run000003_90.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if

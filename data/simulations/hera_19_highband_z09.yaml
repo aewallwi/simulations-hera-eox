@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Beams_HighBand/beamSouthAfricaFeedOverDish.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Beams_HighBand/beamSouthAfricaFeedOverDish_140.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if

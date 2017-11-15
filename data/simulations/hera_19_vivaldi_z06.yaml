@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Vivaldi_Beams/Vivaldi-Gain.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Vivaldi_Beams/Vivaldi-Gain_200.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if
@@ -369,7 +369,7 @@ beam    :
                                 # all frequencies. if true, beam
                                 # scales with frequency
 
-    select_freq     : 229000000.0
+    select_freq     : 200000000.0
                                 # Frequency (Hz) to use for beam in 
                                 # case of achromatic usage of the beam
                                 # If set to null (default), it defaults

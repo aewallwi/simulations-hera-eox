@@ -329,7 +329,7 @@ beam    :
                                 # analytically from antenna aperture
                                 # specifications
 
-    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Vivaldi_Beams/Vivaldi-Gain.fits'
+    file            : '/Users/ewallwic/Dropbox_MIT/Science/simulations-hera-eox/data/simulations/Vivaldi_Beams/Vivaldi-Gain_130.fits'
 
                                 # FITS file containing the external
                                 # antenna beam. Used only if
