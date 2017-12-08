@@ -8,7 +8,9 @@ import scipy.signal as signal
 import matplotlib.pyplot as plt
 import re as re
 import scipy.interpolate as interp
-
+DEBUG=False
+if DEBUG:
+    import matplotlib.pyplot as plt
 #************************************************************
 #compute delay spectrum in the same way that Nicolas does
 #************************************************************
@@ -31,6 +33,32 @@ class MetaData():
         self.comment=comment 
         self.datarange=datarange
 
+def readNicolasTimeTrace(filename):
+    f=open(filename,'r')
+    lines=f.readlines()
+    f.close()
+    header=lines[0]
+    times=[]
+    inputt=[]
+    outputt=[]
+    for line in lines[1:]:
+        lines=line.split('\t')
+        try:
+            times.append(float(lines[0]))
+            inputt.append(float(lines[1]))
+            outputt.append(float(lines[2]))
+        except Exception as error:
+            print(error)
+            print('lines='+str(lines))
+            print('lines0='+lines[0])
+            print('lines1='+lines[1])
+            print('lines2='+lines[2])
+    if 'planewave' in header:
+        dtype='PlaneWave Excitation'
+    elif 'terminal' in header:
+        dtype='Terminal Excitation'
+    x=np.vstack([np.array(times),np.array(inputt),np.array(outputt)]).T
+    return np.vstack([x[:,0],x[:,1]]).T,np.vstack([x[:,0],x[:,2]]).T,MetaData(dtype=dtype)
 #read csv file
 def readCSV(fileName,comment='',device='',dtype=['','']):
     #data=n.loadtxt(fileName,delimiter=',',skiprows=1,dtype=n.complex)
@@ -163,10 +191,10 @@ def readCSTTimeTrace(fileName,comment=''):
     outputTrace2=[]
     lNum=0
     while lNum <len(dataLines):
-        if('o1' in dataLines[lNum]):
+        if('o1' in dataLines[lNum] or 'Port1' in dataLines[lNum]):
             thisTrace=outputTrace1
             lNum+=2
-        elif('o2' in dataLines[lNum]):
+        elif('o2' in dataLines[lNum] or 'Port2' in dataLines[lNum]):
             thisTrace=outputTrace2
             lNum+=2
         elif('i1' in dataLines[lNum]):
@@ -185,6 +213,8 @@ def readCSTTimeTrace(fileName,comment=''):
     inputTrace=np.array(inputTrace)
     outputTrace1=np.array(outputTrace1)
     outputTrace2=np.array(outputTrace2)
+    print('len(inputtrace=%d'%(len(inputTrace)))
+    print('len(outputtrace=%d'%(len(outputTrace1)))
     inputTrace[:,0]*=tFactor
     outputTrace1[:,0]*=tFactor
     if(len(outputTrace2)>0):
@@ -224,17 +254,29 @@ def readCSTS11(fileName,comment='',degrees=True):
     return fFactor*fAxis,data,meta
     
 
-FILETYPES=['CST_TimeTrace','CST_S11','VNAHP_S11','S11_CSV','S11_S1P']
+FILETYPES=['CST_TimeTrace','CST_S11','VNAHP_S11','S11_CSV','S11_S1P','Nicolas']
 class GainData():
     def __init__(self,fileName,fileType,fMin=None,fMax=None,windowFunction=None,comment='',filterNegative=False,extrapolateBand=False):
         assert fileType in FILETYPES
         if(windowFunction is None):
             windowFunction = 'blackman-harris'
         self.windowFunction=windowFunction
-        if (fileType=='CST_TimeTrace'):
-            [inputTrace,outputTrace,_],self.metaData=readCSTTimeTrace(fileName,comment=comment)
+        if (fileType=='CST_TimeTrace'or fileType=='Nicolas'):
+            if fileType=='CST_TimeTrace':
+                [inputTrace,outputTrace,_],self.metaData=readCSTTimeTrace(fileName,comment=comment)
+            elif fileType=='Nicolas':
+                inputTrace,outputTrace,self.metaData=readNicolasTimeTrace(fileName)
+            if np.mod(len(inputTrace),2)==1:
+                inputTrace=np.vstack([inputTrace[0,:],inputTrace])
+                inputTrace[0,0]-=(inputTrace[2,0]-inputTrace[1,0])
+                outputTrace=np.vstack([outputTrace[0,:],outputTrace])
+                outputTrace[0,0]-=(outputTrace[2,0]-outputTrace[1,0])
+            #plt.plot(inputTrace[:,0],inputTrace[:,1])
+            #plt.plot(outputTrace[:,0],outputTrace[:,1])
+            #plt.show()
             self.fAxis=fft.fftshift(fft.fftfreq(len(inputTrace)*2,inputTrace[1,0]-inputTrace[0,0]))
             self.gainFrequency=fftRatio(outputTrace[:,1],inputTrace[:,1])
+            
             
         elif(fileType=='CST_S11'):
             self.fAxis,self.gainFrequency,self.metaData=readCSTS11(fileName,comment=comment)
@@ -304,6 +346,21 @@ class GainData():
         self.gainDelay=fft.fftshift(fft.ifft(fft.fftshift(self.gainFrequency*wF)))
 
 
+    def delay_kernel(self,gammaF=None,fGammaf=None,normed=True):
+        '''
+        derive delay-kernel
+        '''
+        if self.metaData.dtype[1]=='PlaneWave Excitation':
+            g=self.gainDelay
+        else:
+            g=dkernel=self.gain_approx(gammaF=gammaF,fGammaf=fGammaf,domain='delay')
+        dkernel=signal.fftconvolve(g,g[::-1],mode='same')
+        if normed:
+            dkernel/=dkernel.max()
+        return dkernel
+                                    
+        
+
     def gain_approx(self,gammaF=None,fGammaf=None,domain='freq'):
         '''
         approximate gain calculation from Patra 2016 using the zeroth delay. 
@@ -372,6 +429,8 @@ class GainData():
             nfi=int(np.round(fMax/df-fMin/df))
             f0=fMin+nfi/2*df
         fAxis_interp=f0+np.arange(-nfi/2,nfi/2)*df
+        print('nfi=%d'%nfi)
+        print('df=%e'%df)
         tAxis_interp=fft.fftshift(fft.fftfreq(nfi,df))
         b=fMax-fMin
         select_max=np.min([self.fAxis.max(),f0+b])
@@ -418,6 +477,16 @@ class GainData():
         #print wFactor
         band_interp_f=fft.fftshift(fft.fft(fft.fftshift(band_interp)))*wFactor
         window_corr=window_interp_func(fAxis_interp)
+        if DEBUG:
+            fig=plt.figure()
+            ax=fig.add_axes([.1,.1,.8,.8])
+            ax.plot(sub_tAxis,10*np.log10(np.abs(delay_band)/np.abs(delay_band).max()),label='simulation')
+            ax.plot(tAxis_interp,10.*np.log10(np.abs(band_interp)/np.abs(delay_band).max()),label='extrapolated')
+            ax.set_xlabel('$\\tau$ (ns)')
+            ax.set_ylabel('$\\widetilde{S}_{11}$ (dB)')
+            ax.set_ylim(-60,3)
+            ax.set_xlim(-200,600)
+            ax.grid()
         #band_interp_f/=window_corr
         if full_output:
             return sub_tAxis,delay_band,sub_fAxis,sub_band,tAxis_interp,band_interp,fAxis_interp,band_interp_f
