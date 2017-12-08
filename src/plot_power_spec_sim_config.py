@@ -125,7 +125,13 @@ def ps_line(simfile,bandpassfile,beamPfile,z0,bwidth,blindex,lst,ax,
     delays=np.arange(-nf/2,nf/2)/(nf*df)
     kparas=cosmology.eta2kpara(delays,z0)/LITTLEH
     if not bandpassfile=='':
-        band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=flow/2./1e9,fMax=flow*2/1e9)
+        print bandpassfile
+        try:
+            deltaf=fhigh-flow
+            band_pass=gd.GainData(bandpassfile,fileType='CST_TimeTrace',fMin=(flow-deltaf/2.)/1e9,fMax=(fhigh+deltaf/2.)/1e9)
+        except Exception as error:
+            print(error)
+            band_pass=gd.GainData(bandpassfile,fileType='Nicolas',fMin=(flow-deltaf/2.)/1e9,fMax=(fhigh+deltaf/2.)/1e9)
         _,kernel=band_pass.interpolate_subband(nf,df*1e-9,f0*1e-9)
         kernel=np.abs(kernel)**2.
         #figk=plt.figure()
@@ -188,6 +194,7 @@ parser.add_argument('--title','-t',dest='title',type=str,default='',help='Title 
 parser.add_argument('--baseline','-b',dest='baseline',type=int,default=None,
                     help=('Baseline number to plot for all. Overrides baselien in each line. If None,'
                           'will plot individual baselines in config file.'))
+parser.add_argument('--zero','-z',dest='zero',type=str,default='False',help=('True or False depending on if you want the peak of the delay response to be translated to zero ns.'))
 
 args=parser.parse_args()
 
