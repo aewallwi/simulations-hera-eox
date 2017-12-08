@@ -303,7 +303,7 @@ delta_z_eff=-cosmology.df2dz(bwidths[0],zs[0])*np.sqrt(np.mean((windowkernel)**2
 
 if sameb and samedz and samez:
     data=np.load(simfile)
-    myax.text(-0.6,1e8,'b=%.2f\n$\\Delta z=%.1f$\nLST=%.1f hours\nz=%.2f'%(data['bl_length'][blindex],delta_z_eff,lsts[0]/15.,zs[0]),fontsize=16)
+    myax.text(-0.6,1e8,'b=%.2f m\n$\\Delta z=%.1f$\nLST=%.1f hours\nz=%.2f'%(data['bl_length'][blindex],delta_z_eff,lsts[0]/15.,zs[0]),fontsize=16)
         
 
 
